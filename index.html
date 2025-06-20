@@ -1,0 +1,68 @@
+<html>
+  <head>
+    <title>haveibeenpwned.watch</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/chota@latest" />
+    <link rel="stylesheet" href="style.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+
+  <body>
+    <div class="row header">
+      <div class="col">
+        <h1><code>haveibeenpwned.watch</code></h1>
+        <b><a href="https://github.com/iosifache/haveibeenpwned.watch">Open-source</a>, no-fluff charts showcasing <a href="https://haveibeenpwned.com"><code>haveibeenpwned.com</code></a>'s pwned account data.</b>
+      </div>
+    </div>
+
+    <hr />
+    <br />
+
+    <div class="row">
+      <div class="col-6">
+        <b># of breaches</b>:<br />
+        <h1><code id="total-breaches"></code></h1>
+      </div>
+
+      <div class="col-6">
+        <b># of breached companies</b>:<br />
+        <h1><code id="total-breached"></code></h1>
+      </div>
+    </div>
+
+    <div class="row"">
+      <b>Breaches per year</b>:<br />
+      <canvas id="breaches-per-year"></canvas>
+    </div>
+
+    <div class="row"">
+      <b>Pwned accounts per year</b>:<br />
+      <canvas id="pwned-per-year"></canvas>
+    </div>
+
+    <div class="row"">
+      <b>Pwned data types per year</b>:<br />
+      <canvas id="data-per-year"></canvas>
+    </div>
+
+     <div class="row">
+      <b>Time since breach date to publish in HIBP</b>:<br />
+      <canvas id="time-to-publish"></canvas>
+    </div>
+
+    <div class="row" id="latest-breaches">
+      <b>Latest 10 breaches</b>:<br /><br />
+    </div>
+
+    <div class="row" id="most-breached">
+      <b>Websites with two or more breaches</b>:<br /><br />
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
