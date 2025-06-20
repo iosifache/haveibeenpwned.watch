@@ -1,0 +1,1 @@
+Create a new column with the CSV file with the classification of every domain. The categories should be succesing, 1-3 words, and maximise reuse while keeping the accuracy.

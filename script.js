@@ -13,8 +13,10 @@ document.addEventListener("DOMContentLoaded", function () {
       createBreachesPerYearChart(data);
       createPwnedPerYearChart(data);
       createDataClassesPerYearChart(data);
+      createIndustryPerYearChart(data);
       createMeanTimeToPublishChart(data);
       createLatestBreachesTable(data);
+      createMostImpactfulBreachesTable(data);
     });
 });
 
@@ -147,32 +149,34 @@ function createPwnedPerYearChart(data) {
   );
 }
 
-function createDataClassesPerYearChart(data) {
-  const allDataClasses = new Set();
+function createStackedBarPlotWithProperty(accessorFunc, data, graphID) {
+  const allValues = new Set();
   data.forEach((item) => {
-    (item.DataClasses || []).forEach((dc) => allDataClasses.add(dc));
+    (accessorFunc(item) || []).forEach((dc) => allValues.add(dc));
   });
-  const dataClasses = Array.from(allDataClasses);
+  const values = Array.from(allValues);
 
   const perYear = {};
   data.forEach((item) => {
+    if (!item.Domain || item.Domain === "") return;
+
     const year = new Date(item.BreachDate).getFullYear();
 
     if (!perYear[year]) perYear[year] = {};
-    (item.DataClasses || []).forEach((dc) => {
+    (accessorFunc(item) || []).forEach((dc) => {
       perYear[year][dc] = (perYear[year][dc] || 0) + item.PwnCount;
     });
   });
 
   const years = Object.keys(perYear).sort();
-  const datasets = dataClasses.map((dc) => ({
+  const datasets = values.map((dc) => ({
     label: dc,
     data: years.map((year) => perYear[year][dc] || 0),
     backgroundColor: `hsl(${Math.floor(Math.random() * 360)},70%,70%)`,
     stack: "stack",
   }));
 
-  const ctx = document.getElementById("data-per-year").getContext("2d");
+  const ctx = document.getElementById(graphID).getContext("2d");
   new Chart(ctx, {
     type: "bar",
     data: {
@@ -190,6 +194,38 @@ function createDataClassesPerYearChart(data) {
       },
     },
   });
+}
+
+function createDataClassesPerYearChart(data) {
+  const accessorFunc = (item) => {
+    return item.DataClasses || [];
+  };
+
+  createStackedBarPlotWithProperty(accessorFunc, data, "data-per-year");
+}
+
+function createIndustryPerYearChart(data) {
+  fetch("domains.csv")
+    .then((response) => response.text())
+    .then((csvText) => {
+      const lines = csvText.trim().split("\n");
+      const domainCategoryMap = {};
+      lines.forEach((line, idx) => {
+        if (idx === 0) return;
+
+        const [domain, category] = line.split(",");
+
+        domainCategoryMap[domain.trim()] = category.trim();
+      });
+
+      const accessorFunc = (item) => {
+        const cat = domainCategoryMap[item.Domain];
+
+        return cat ? [cat] : ["Unknown"];
+      };
+
+      createStackedBarPlotWithProperty(accessorFunc, data, "industry-per-year");
+    });
 }
 
 function createMeanTimeToPublishChart(data) {
@@ -235,12 +271,7 @@ function createMeanTimeToPublishChart(data) {
   });
 }
 
-function createLatestBreachesTable(data) {
-  const latestBreaches = data
-    .sort((a, b) => new Date(b.BreachDate) - new Date(a.BreachDate))
-    .filter((item) => item.Domain !== "")
-    .slice(0, 10);
-
+function createTableWithBreaches(canvasID, data) {
   const table = document.createElement("table");
 
   const thead = document.createElement("thead");
@@ -265,7 +296,7 @@ function createLatestBreachesTable(data) {
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
-  latestBreaches.forEach((item) => {
+  data.forEach((item) => {
     const row = document.createElement("tr");
 
     const dateCell = document.createElement("td");
@@ -293,6 +324,24 @@ function createLatestBreachesTable(data) {
     table.appendChild(row);
   });
 
-  const latestBreachesContainer = document.getElementById("latest-breaches");
-  latestBreachesContainer.appendChild(table);
+  const selectedBreachesContainer = document.getElementById(canvasID);
+  selectedBreachesContainer.appendChild(table);
+}
+
+function createLatestBreachesTable(data) {
+  const selectedBreaches = data
+    .sort((a, b) => new Date(b.BreachDate) - new Date(a.BreachDate))
+    .filter((item) => item.Domain !== "")
+    .slice(0, 10);
+
+  createTableWithBreaches("latest-breaches", selectedBreaches);
+}
+
+function createMostImpactfulBreachesTable(data) {
+  const selectedBreaches = data
+    .sort((a, b) => b.PwnCount - a.PwnCount)
+    .filter((item) => item.Domain !== "")
+    .slice(0, 10);
+
+  createTableWithBreaches("most-impactful-breaches", selectedBreaches);
 }
