@@ -41,12 +41,12 @@ function showNumberOfBreachedAccounts(data) {
 function createMostBreachedTable(data) {
   const allApps = data.map((item) => item.Domain);
 
-  const companyCounts = allApps.reduce((acc, domain) => {
+  const appsCounts = allApps.reduce((acc, domain) => {
     acc[domain] = (acc[domain] || 0) + 1;
     return acc;
   }, {});
 
-  const filteredApps = Object.entries(companyCounts)
+  const filteredApps = Object.entries(appsCounts)
     .filter(([_, count]) => count >= 2)
     .sort((a, b) => b[1] - a[1]);
 
@@ -185,7 +185,7 @@ function createDataClassesPerYearChart(data) {
       },
       responsive: true,
       scales: {
-        x: { stacked: truecompan },
+        x: { stacked: true },
         y: { stacked: true, beginAtZero: true },
       },
     },
