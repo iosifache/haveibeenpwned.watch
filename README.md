@@ -27,8 +27,3 @@ The Grok prompt is the following:
 > Create a new column with the CSV file with the classification of every domain. The categories should be succesing, 1-3 words, and maximise reuse while keeping the accuracy.
 
 </details>
-
-## TODO
-
-- [ ] Create a GitHub Action for updating the HIBP data
-- [ ] Find an alternative for website classification

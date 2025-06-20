@@ -17,6 +17,7 @@ jobs:
           curl -sSL -H "User-Agent: haveibeenpwned.watch" \
             https://haveibeenpwned.com/api/v3/breaches \
             -o index.json
+          stat --printf="Index file size: %s bytes\n" index.json
 
       - name: Configure git author
         run: |
