@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Compute and plot the statistics
       showNumberOfBreachedCompanies(data);
+      showNumberOfBreachedAccounts(data);
       showNumberOfBreaches(data);
       createMostBreachedTable(data);
       createBreachesPerYearChart(data);
@@ -25,7 +26,17 @@ function showNumberOfBreachedCompanies(data) {
   const allCompanies = data.map((item) => item.Domain);
   const companies = Array.from(new Set(allCompanies));
 
-  document.getElementById("total-breached").innerHTML = companies.length;
+  document.getElementById("total-breached-companies").innerHTML =
+    companies.length;
+}
+
+function showNumberOfBreachedAccounts(data) {
+  const totalPwned = data.reduce((acc, item) => {
+    return acc + (item.PwnCount || 0);
+  }, 0);
+
+  document.getElementById("total-breached-accounts").innerHTML =
+    totalPwned.toLocaleString();
 }
 
 function createMostBreachedTable(data) {
