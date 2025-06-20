@@ -158,9 +158,10 @@ function createDataClassesPerYearChart(data) {
   const perYear = {};
   data.forEach((item) => {
     const year = new Date(item.BreachDate).getFullYear();
+
     if (!perYear[year]) perYear[year] = {};
     (item.DataClasses || []).forEach((dc) => {
-      perYear[year][dc] = (perYear[year][dc] || 0) + 1;
+      perYear[year][dc] = (perYear[year][dc] || 0) + item.PwnCount;
     });
   });
 
