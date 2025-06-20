@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
       data = data.filter((item) => item.IsFabricated === false);
 
       // Compute and plot the statistics
-      showNumberOfBreachedCompanies(data);
+      showNumberOfBreachedApps(data);
       showNumberOfBreachedAccounts(data);
       showNumberOfBreaches(data);
       createMostBreachedTable(data);
@@ -22,12 +22,11 @@ function showNumberOfBreaches(data) {
   document.getElementById("total-breaches").innerHTML = data.length;
 }
 
-function showNumberOfBreachedCompanies(data) {
-  const allCompanies = data.map((item) => item.Domain);
-  const companies = Array.from(new Set(allCompanies));
+function showNumberOfBreachedApps(data) {
+  const allApps = data.map((item) => item.Domain);
+  const apps = Array.from(new Set(allApps));
 
-  document.getElementById("total-breached-companies").innerHTML =
-    companies.length;
+  document.getElementById("total-breached-apps").innerHTML = apps.length;
 }
 
 function showNumberOfBreachedAccounts(data) {
@@ -40,14 +39,14 @@ function showNumberOfBreachedAccounts(data) {
 }
 
 function createMostBreachedTable(data) {
-  const allCompanies = data.map((item) => item.Domain);
+  const allApps = data.map((item) => item.Domain);
 
-  const companyCounts = allCompanies.reduce((acc, domain) => {
+  const companyCounts = allApps.reduce((acc, domain) => {
     acc[domain] = (acc[domain] || 0) + 1;
     return acc;
   }, {});
 
-  const filteredCompanies = Object.entries(companyCounts)
+  const filteredApps = Object.entries(companyCounts)
     .filter(([_, count]) => count >= 2)
     .sort((a, b) => b[1] - a[1]);
 
@@ -65,7 +64,7 @@ function createMostBreachedTable(data) {
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
-  filteredCompanies.forEach(([domain, count]) => {
+  filteredApps.forEach(([domain, count]) => {
     if (domain === "") return;
 
     const row = document.createElement("tr");
@@ -186,7 +185,7 @@ function createDataClassesPerYearChart(data) {
       },
       responsive: true,
       scales: {
-        x: { stacked: true },
+        x: { stacked: truecompan },
         y: { stacked: true, beginAtZero: true },
       },
     },
