@@ -26,38 +26,38 @@
     <div class="row">
       <div class="col-4-md">
         <b># of breaches</b>:<br />
-        <h1><code id="total-breaches"></code></h1>
+        <h1><code id="breaches-count-stat"></code></h1>
       </div>
 
       <div class="col-4-md">
         <b># of breached apps</b>:<br />
-        <h1><code id="total-breached-apps"></code></h1>
+        <h1><code id="breached-distinct-apps-count-stat"></code></h1>
       </div>
 
     <div class="col-4-md">
         <b># of breached accounts</b>:<br />
-        <h1><code id="total-breached-accounts"></code></h1>
+        <h1><code id="breached-accounts-count-stat"></code></h1>
       </div>
     </div>
 
     <div class="row"">
       <b>Breaches per year</b>:<br />
-      <canvas id="breaches-per-year"></canvas>
+      <canvas id="breaches-per-year-chart"></canvas>
     </div>
 
     <div class="row"">
       <b>Pwned accounts per year</b>:<br />
-      <canvas id="pwned-per-year"></canvas>
+      <canvas id="pwned-per-year-chart"></canvas>
     </div>
 
     <div class="row"">
       <b>Mean pwned accounts per breach per year</b>:<br />
-      <canvas id="mean-accs-per-breach-per-year"></canvas>
+      <canvas id="pwned-per-branch-ratio-chart"></canvas>
     </div>
 
     <div class="row"">
       <b>Pwned accounts per data types per year</b>:<br />
-      <canvas id="data-per-year"></canvas>
+      <canvas id="data-classes-per-year-chart"></canvas>
     </div>
 
     <div class="row"">
@@ -67,18 +67,18 @@
 
      <div class="row">
       <b>Time since breach date to publish in HIBP</b>:<br />
-      <canvas id="time-to-publish"></canvas>
+      <canvas id="hibp-time-to-publish-chart"></canvas>
     </div>
 
-    <div class="row" id="latest-breaches">
+    <div class="row" id="latest-breaches-table">
       <b>Latest 10 breaches</b>:<br /><br />
     </div>
 
-    <div class="row" id="most-impactful-breaches">
+    <div class="row" id="most-impactful-breaches-table">
       <b>Most impactful 10 breaches</b>:<br /><br />
     </div>
     
-    <div class="row" id="most-breached">
+    <div class="row" id="most-breached-table">
       <b>Websites with two or more breaches</b>:<br /><br />
     </div>
 

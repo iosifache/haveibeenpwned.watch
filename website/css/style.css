@@ -1,22 +1,22 @@
 body {
-    width: 80%;
-    margin-left: 10%;
-    font-family: "Roboto", sans-serif;
+  width: 80%;
+  margin-left: 10%;
+  font-family: "Roboto", sans-serif;
 }
 
-.header{
-    text-align: center;
-    margin-top: 20px;
+.header {
+  text-align: center;
+  margin-top: 20px;
 }
 
 .row {
-    margin-bottom: 3cap;
+  margin-bottom: 3cap;
 }
 
 canvas {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 b {
-    font-weight: 800;
+  font-weight: 800;
 }

@@ -5,31 +5,40 @@ document.addEventListener("DOMContentLoaded", function () {
       // Filter out fabricated breaches
       data = data.filter((item) => item.IsFabricated === false);
 
-      // Compute and plot the statistics
-      showNumberOfBreachedApps(data);
+      // Show statistics
+      showNumberOfBreachedDistinctApps(data);
       showNumberOfBreachedAccounts(data);
       showNumberOfBreaches(data);
-      createMostBreachedTable(data);
+
+      // Plot charts
       createBreachesPerYearChart(data);
       createPwnedPerYearChart(data);
-      createMeanPwnedPerYearChart(data);
-      createDataClassesPerYearChart(data);
-      createIndustryPerYearChart(data);
-      createMeanTimeToPublishChart(data);
+      createPwnedPerBreachRatioChart(data);
+      createPwnedDataClassesPerYearChart(data);
+      createPwnedIndustryPerYearChart(data);
+      createMeanTimeToHIBPPublishChart(data);
+
+      // Create tables
+      createMostBreachedAppsTable(data);
       createLatestBreachesTable(data);
       createMostImpactfulBreachesTable(data);
     });
 });
 
+//
+// Statistics
+//
+
 function showNumberOfBreaches(data) {
-  document.getElementById("total-breaches").innerHTML = data.length;
+  document.getElementById("breaches-count-stat").innerHTML = data.length;
 }
 
-function showNumberOfBreachedApps(data) {
+function showNumberOfBreachedDistinctApps(data) {
   const allApps = data.map((item) => item.Domain);
   const apps = Array.from(new Set(allApps));
 
-  document.getElementById("total-breached-apps").innerHTML = apps.length;
+  document.getElementById("breached-distinct-apps-count-stat").innerHTML =
+    apps.length;
 }
 
 function showNumberOfBreachedAccounts(data) {
@@ -37,11 +46,228 @@ function showNumberOfBreachedAccounts(data) {
     return acc + (item.PwnCount || 0);
   }, 0);
 
-  document.getElementById("total-breached-accounts").innerHTML =
+  document.getElementById("breached-accounts-count-stat").innerHTML =
     totalPwned.toLocaleString();
 }
 
-function createMostBreachedTable(data) {
+//
+// Graphs
+//
+
+function createBarPlotWithProperty(data, accumulateFunc, chartID, label) {
+  const breachesCountPerYear = data.reduce((acc, item) => {
+    const year = new Date(item.BreachDate).getFullYear();
+    acc[year] = (acc[year] || 0) + 1;
+    return acc;
+  }, {});
+
+  const breachesPerYear = data.reduce((acc, item) => {
+    const year = new Date(item.BreachDate).getFullYear();
+    acc[year] =
+      accumulateFunc(breachesCountPerYear[year], acc[year], item) || 0;
+    return acc;
+  }, {});
+
+  const years = Object.keys(breachesPerYear).sort();
+  const counts = years.map((year) => breachesPerYear[year]);
+
+  const ctx = document.getElementById(chartID).getContext("2d");
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: years,
+      datasets: [
+        {
+          label: label,
+          data: counts,
+          backgroundColor: "rgba(236, 240, 241, 1.0)",
+          borderColor: "rgba(189, 195, 199, 1.0)",
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+}
+
+function createBreachesPerYearChart(data) {
+  const accumulateFunc = (totalBreachesInYear, yearAcc, item) => {
+    return (yearAcc || 0) + 1;
+  };
+
+  createBarPlotWithProperty(
+    data,
+    accumulateFunc,
+    "breaches-per-year-chart",
+    "Breaches per Year"
+  );
+}
+
+function createPwnedPerYearChart(data) {
+  const accumulateFunc = (totalBreachesInYear, yearAcc, item) => {
+    return (yearAcc || 0) + item.PwnCount;
+  };
+
+  createBarPlotWithProperty(
+    data,
+    accumulateFunc,
+    "pwned-per-year-chart",
+    "Pwned Accounts per Year"
+  );
+}
+
+function createPwnedPerBreachRatioChart(data) {
+  const accumulateFunc = (totalBreaches, yearAcc, item) => {
+    return yearAcc + (item.PwnCount || 0) / (totalBreaches || 1);
+  };
+
+  createBarPlotWithProperty(
+    data,
+    accumulateFunc,
+    "pwned-per-branch-ratio-chart",
+    "Mean Pwned Accounts per Breach per Year"
+  );
+}
+
+function createStackedBarPlotWithProperty(accessorFunc, data, chartID) {
+  const allValues = new Set();
+  data.forEach((item) => {
+    (accessorFunc(item) || []).forEach((dc) => allValues.add(dc));
+  });
+  const values = Array.from(allValues);
+
+  const perYear = {};
+  data.forEach((item) => {
+    if (!item.Domain || item.Domain === "") return;
+
+    const year = new Date(item.BreachDate).getFullYear();
+
+    if (!perYear[year]) perYear[year] = {};
+    (accessorFunc(item) || []).forEach((dc) => {
+      perYear[year][dc] = (perYear[year][dc] || 0) + item.PwnCount;
+    });
+  });
+
+  const years = Object.keys(perYear).sort();
+  const datasets = values.map((dc) => ({
+    label: dc,
+    data: years.map((year) => perYear[year][dc] || 0),
+    backgroundColor: `hsl(${Math.floor(Math.random() * 360)},70%,70%)`,
+    stack: "stack",
+  }));
+
+  const ctx = document.getElementById(chartID).getContext("2d");
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: years,
+      datasets: datasets,
+    },
+    options: {
+      plugins: {
+        legend: { position: "bottom" },
+      },
+      responsive: true,
+      scales: {
+        x: { stacked: true },
+        y: { stacked: true, beginAtZero: true },
+      },
+    },
+  });
+}
+
+function createPwnedDataClassesPerYearChart(data) {
+  const accessorFunc = (item) => {
+    return item.DataClasses || [];
+  };
+
+  createStackedBarPlotWithProperty(
+    accessorFunc,
+    data,
+    "data-classes-per-year-chart"
+  );
+}
+
+function createPwnedIndustryPerYearChart(data) {
+  fetch("data/domains.csv")
+    .then((response) => response.text())
+    .then((csvText) => {
+      const lines = csvText.trim().split("\n");
+      const domainCategoryMap = {};
+      lines.forEach((line, idx) => {
+        if (idx === 0) return;
+
+        const [domain, category] = line.split(",");
+
+        domainCategoryMap[domain.trim()] = category.trim();
+      });
+
+      const accessorFunc = (item) => {
+        const cat = domainCategoryMap[item.Domain];
+
+        return cat ? [cat] : ["Unknown"];
+      };
+
+      createStackedBarPlotWithProperty(accessorFunc, data, "industry-per-year");
+    });
+}
+
+function createMeanTimeToHIBPPublishChart(data) {
+  const perYear = {};
+  data.forEach((item) => {
+    const year = new Date(item.BreachDate).getFullYear();
+    if (!perYear[year]) perYear[year] = [];
+
+    if (item.AddedDate && item.BreachDate) {
+      const breachDate = new Date(item.BreachDate);
+      const addedDate = new Date(item.AddedDate);
+      const diffDays = (addedDate - breachDate) / (1000 * 60 * 60 * 24);
+      perYear[year].push(diffDays);
+    }
+  });
+
+  const years = Object.keys(perYear).sort();
+  const means = years.map((year) => {
+    const times = perYear[year];
+    return times.length ? times.reduce((a, b) => a + b, 0) / times.length : 0;
+  });
+
+  const ctx = document
+    .getElementById("hibp-time-to-publish-chart")
+    .getContext("2d");
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: years,
+      datasets: [
+        {
+          label: "Mean Time to HIBP Publish (in days)",
+          data: means,
+          backgroundColor: "rgba(236, 240, 241, 1.0)",
+          borderColor: "rgba(189, 195, 199, 1.0)",
+          fill: true,
+        },
+      ],
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true },
+      },
+    },
+  });
+}
+
+//
+// Tables
+//
+
+function createMostBreachedAppsTable(data) {
   const allApps = data.map((item) => item.Domain);
 
   const appsCounts = allApps.reduce((acc, domain) => {
@@ -83,212 +309,8 @@ function createMostBreachedTable(data) {
     table.appendChild(row);
   });
 
-  const mostBreached = document.getElementById("most-breached");
+  const mostBreached = document.getElementById("most-breached-table");
   mostBreached.appendChild(table);
-}
-
-function createBarPlotWithProperty(data, accumulateFunc, graphID, label) {
-  // Create a map with the total number of items with .BreachDate in that year
-  const breachesCountPerYear = data.reduce((acc, item) => {
-    const year = new Date(item.BreachDate).getFullYear();
-    acc[year] = (acc[year] || 0) + 1;
-    return acc;
-  }, {});
-
-  const breachesPerYear = data.reduce((acc, item) => {
-    const year = new Date(item.BreachDate).getFullYear();
-    acc[year] =
-      accumulateFunc(breachesCountPerYear[year], acc[year], item) || 0;
-    return acc;
-  }, {});
-
-  const years = Object.keys(breachesPerYear).sort();
-  const counts = years.map((year) => breachesPerYear[year]);
-
-  const ctx = document.getElementById(graphID).getContext("2d");
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: years,
-      datasets: [
-        {
-          label: label,
-          data: counts,
-          backgroundColor: "rgba(236, 240, 241, 1.0)",
-          borderColor: "rgba(189, 195, 199, 1.0)",
-          borderWidth: 1,
-        },
-      ],
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true,
-        },
-      },
-    },
-  });
-}
-
-function createBreachesPerYearChart(data) {
-  const accumulateFunc = (totalBreachesInYear, yearAcc, item) => {
-    return (yearAcc || 0) + 1;
-  };
-
-  createBarPlotWithProperty(
-    data,
-    accumulateFunc,
-    "breaches-per-year",
-    "Breaches per Year"
-  );
-}
-
-function createPwnedPerYearChart(data) {
-  const accumulateFunc = (totalBreachesInYear, yearAcc, item) => {
-    return (yearAcc || 0) + item.PwnCount;
-  };
-
-  createBarPlotWithProperty(
-    data,
-    accumulateFunc,
-    "pwned-per-year",
-    "Pwned Accounts per Year"
-  );
-}
-
-function createMeanPwnedPerYearChart(data) {
-  const accumulateFunc = (totalBreaches, yearAcc, item) => {
-    return yearAcc + (item.PwnCount || 0) / (totalBreaches || 1);
-  };
-
-  createBarPlotWithProperty(
-    data,
-    accumulateFunc,
-    "mean-accs-per-breach-per-year",
-    "Mean Pwned Accounts per Breach per Year"
-  );
-}
-
-function createStackedBarPlotWithProperty(accessorFunc, data, graphID) {
-  const allValues = new Set();
-  data.forEach((item) => {
-    (accessorFunc(item) || []).forEach((dc) => allValues.add(dc));
-  });
-  const values = Array.from(allValues);
-
-  const perYear = {};
-  data.forEach((item) => {
-    if (!item.Domain || item.Domain === "") return;
-
-    const year = new Date(item.BreachDate).getFullYear();
-
-    if (!perYear[year]) perYear[year] = {};
-    (accessorFunc(item) || []).forEach((dc) => {
-      perYear[year][dc] = (perYear[year][dc] || 0) + item.PwnCount;
-    });
-  });
-
-  const years = Object.keys(perYear).sort();
-  const datasets = values.map((dc) => ({
-    label: dc,
-    data: years.map((year) => perYear[year][dc] || 0),
-    backgroundColor: `hsl(${Math.floor(Math.random() * 360)},70%,70%)`,
-    stack: "stack",
-  }));
-
-  const ctx = document.getElementById(graphID).getContext("2d");
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: years,
-      datasets: datasets,
-    },
-    options: {
-      plugins: {
-        legend: { position: "bottom" },
-      },
-      responsive: true,
-      scales: {
-        x: { stacked: true },
-        y: { stacked: true, beginAtZero: true },
-      },
-    },
-  });
-}
-
-function createDataClassesPerYearChart(data) {
-  const accessorFunc = (item) => {
-    return item.DataClasses || [];
-  };
-
-  createStackedBarPlotWithProperty(accessorFunc, data, "data-per-year");
-}
-
-function createIndustryPerYearChart(data) {
-  fetch("data/domains.csv")
-    .then((response) => response.text())
-    .then((csvText) => {
-      const lines = csvText.trim().split("\n");
-      const domainCategoryMap = {};
-      lines.forEach((line, idx) => {
-        if (idx === 0) return;
-
-        const [domain, category] = line.split(",");
-
-        domainCategoryMap[domain.trim()] = category.trim();
-      });
-
-      const accessorFunc = (item) => {
-        const cat = domainCategoryMap[item.Domain];
-
-        return cat ? [cat] : ["Unknown"];
-      };
-
-      createStackedBarPlotWithProperty(accessorFunc, data, "industry-per-year");
-    });
-}
-
-function createMeanTimeToPublishChart(data) {
-  const perYear = {};
-  data.forEach((item) => {
-    const year = new Date(item.BreachDate).getFullYear();
-    if (!perYear[year]) perYear[year] = [];
-
-    if (item.AddedDate && item.BreachDate) {
-      const breachDate = new Date(item.BreachDate);
-      const addedDate = new Date(item.AddedDate);
-      const diffDays = (addedDate - breachDate) / (1000 * 60 * 60 * 24);
-      perYear[year].push(diffDays);
-    }
-  });
-
-  const years = Object.keys(perYear).sort();
-  const means = years.map((year) => {
-    const times = perYear[year];
-    return times.length ? times.reduce((a, b) => a + b, 0) / times.length : 0;
-  });
-
-  const ctx = document.getElementById("time-to-publish").getContext("2d");
-  new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: years,
-      datasets: [
-        {
-          label: "Mean Time to Publish (in days)",
-          data: means,
-          backgroundColor: "rgba(236, 240, 241, 1.0)",
-          borderColor: "rgba(189, 195, 199, 1.0)",
-          fill: true,
-        },
-      ],
-    },
-    options: {
-      scales: {
-        y: { beginAtZero: true },
-      },
-    },
-  });
 }
 
 function createTableWithBreaches(canvasID, data) {
@@ -354,7 +376,7 @@ function createLatestBreachesTable(data) {
     .filter((item) => item.Domain !== "")
     .slice(0, 10);
 
-  createTableWithBreaches("latest-breaches", selectedBreaches);
+  createTableWithBreaches("latest-breaches-table", selectedBreaches);
 }
 
 function createMostImpactfulBreachesTable(data) {
@@ -363,5 +385,5 @@ function createMostImpactfulBreachesTable(data) {
     .filter((item) => item.Domain !== "")
     .slice(0, 10);
 
-  createTableWithBreaches("most-impactful-breaches", selectedBreaches);
+  createTableWithBreaches("most-impactful-breaches-table", selectedBreaches);
 }
