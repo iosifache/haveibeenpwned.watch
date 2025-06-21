@@ -1,4 +1,4 @@
-name: Update the HIBP breaches index
+name: Updates the HIBP breaches index
 
 on:
   schedule:
