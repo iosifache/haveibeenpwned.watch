@@ -16,8 +16,8 @@ jobs:
         run: |
           curl -sSL -H "User-Agent: haveibeenpwned.watch" \
             https://haveibeenpwned.com/api/v3/breaches \
-            -o index.json
-          stat --printf="Index file size: %s bytes\n" index.json
+            -o website/data/index.json
+          stat --printf="Index file size: %s bytes\n" website/data/index.json
 
       - name: Configure git author
         run: |
@@ -26,7 +26,7 @@ jobs:
 
       - name: Commit changes
         run: |
-          git add index.json
+          git add website/data/index.json
           git diff --cached --quiet || git commit -m "Updates HIBP breaches index"
       
       - name: Push changes

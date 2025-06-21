@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  fetch("index.json")
+  fetch("data/index.json")
     .then((response) => response.json())
     .then((data) => {
       // Filter out fabricated breaches
@@ -225,7 +225,7 @@ function createDataClassesPerYearChart(data) {
 }
 
 function createIndustryPerYearChart(data) {
-  fetch("domains.csv")
+  fetch("data/domains.csv")
     .then((response) => response.text())
     .then((csvText) => {
       const lines = csvText.trim().split("\n");
