@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
       createMostBreachedTable(data);
       createBreachesPerYearChart(data);
       createPwnedPerYearChart(data);
+      createMeanPwnedPerYearChart(data);
       createDataClassesPerYearChart(data);
       createIndustryPerYearChart(data);
       createMeanTimeToPublishChart(data);
@@ -87,11 +88,17 @@ function createMostBreachedTable(data) {
 }
 
 function createBarPlotWithProperty(data, accumulateFunc, graphID, label) {
+  // Create a map with the total number of items with .BreachDate in that year
+  const breachesCountPerYear = data.reduce((acc, item) => {
+    const year = new Date(item.BreachDate).getFullYear();
+    acc[year] = (acc[year] || 0) + 1;
+    return acc;
+  }, {});
+
   const breachesPerYear = data.reduce((acc, item) => {
     const year = new Date(item.BreachDate).getFullYear();
-
-    acc[year] = accumulateFunc(acc[year], item) || 0;
-
+    acc[year] =
+      accumulateFunc(breachesCountPerYear[year], acc[year], item) || 0;
     return acc;
   }, {});
 
@@ -124,7 +131,7 @@ function createBarPlotWithProperty(data, accumulateFunc, graphID, label) {
 }
 
 function createBreachesPerYearChart(data) {
-  const accumulateFunc = (yearAcc, _) => {
+  const accumulateFunc = (totalBreachesInYear, yearAcc, item) => {
     return (yearAcc || 0) + 1;
   };
 
@@ -137,7 +144,7 @@ function createBreachesPerYearChart(data) {
 }
 
 function createPwnedPerYearChart(data) {
-  const accumulateFunc = (yearAcc, item) => {
+  const accumulateFunc = (totalBreachesInYear, yearAcc, item) => {
     return (yearAcc || 0) + item.PwnCount;
   };
 
@@ -146,6 +153,19 @@ function createPwnedPerYearChart(data) {
     accumulateFunc,
     "pwned-per-year",
     "Pwned Accounts per Year"
+  );
+}
+
+function createMeanPwnedPerYearChart(data) {
+  const accumulateFunc = (totalBreaches, yearAcc, item) => {
+    return yearAcc + (item.PwnCount || 0) / (totalBreaches || 1);
+  };
+
+  createBarPlotWithProperty(
+    data,
+    accumulateFunc,
+    "mean-accs-per-breach-per-year",
+    "Mean Pwned Accounts per Breach per Year"
   );
 }
 
