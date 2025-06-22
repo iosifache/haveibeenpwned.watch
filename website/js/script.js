@@ -109,6 +109,9 @@ function createBarPlotWithProperty(data, accumulateFunc, chartID, label) {
           beginAtZero: true,
         },
       },
+      plugins: {
+        legend: { display: false },
+      },
     },
   });
 }
@@ -265,15 +268,21 @@ function createMeanTimeToHIBPPublishChart(data) {
       labels: timeBuckets,
       datasets: [
         {
-          label: "Mean Time to HIBP Publish (in days)",
+          label: "",
           data: means,
           backgroundColor: CHART_BACKGROUND_COLOR,
           borderColor: CHART_BORDER_COLOR,
+          borderWidth: 1,
           fill: true,
+          pointRadius: 0,
+          pointHoverRadius: 0,
         },
       ],
     },
     options: {
+      plugins: {
+        legend: { display: false },
+      },
       scales: {
         y: { beginAtZero: true },
       },
