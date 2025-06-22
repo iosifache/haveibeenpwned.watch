@@ -51,8 +51,11 @@ function showNumberOfBreachedAccounts(data) {
 }
 
 //
-// Graphs
+// Charts
 //
+
+const CHART_BACKGROUND_COLOR = "rgba(236, 240, 241, 1.0)";
+const CHART_BORDER_COLOR = "rgba(47, 54, 64,1.0)";
 
 function createBarPlotWithProperty(data, accumulateFunc, chartID, label) {
   const breachesCountPerYear = data.reduce((acc, item) => {
@@ -80,8 +83,8 @@ function createBarPlotWithProperty(data, accumulateFunc, chartID, label) {
         {
           label: label,
           data: counts,
-          backgroundColor: "rgba(236, 240, 241, 1.0)",
-          borderColor: "rgba(189, 195, 199, 1.0)",
+          backgroundColor: CHART_BACKGROUND_COLOR,
+          borderColor: CHART_BORDER_COLOR,
           borderWidth: 1,
         },
       ],
@@ -249,8 +252,8 @@ function createMeanTimeToHIBPPublishChart(data) {
         {
           label: "Mean Time to HIBP Publish (in days)",
           data: means,
-          backgroundColor: "rgba(236, 240, 241, 1.0)",
-          borderColor: "rgba(189, 195, 199, 1.0)",
+          backgroundColor: CHART_BACKGROUND_COLOR,
+          borderColor: CHART_BORDER_COLOR,
           fill: true,
         },
       ],
@@ -280,6 +283,7 @@ function createMostBreachedAppsTable(data) {
     .sort((a, b) => b[1] - a[1]);
 
   const table = document.createElement("table");
+  table.classList.add("striped");
 
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
@@ -315,6 +319,7 @@ function createMostBreachedAppsTable(data) {
 
 function createTableWithBreaches(canvasID, data) {
   const table = document.createElement("table");
+  table.classList.add("striped");
 
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
