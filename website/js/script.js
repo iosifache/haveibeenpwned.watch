@@ -11,11 +11,11 @@ document.addEventListener("DOMContentLoaded", function () {
       showNumberOfBreaches(data);
 
       // Plot charts
-      createBreachesPerYearChart(data);
-      createPwnedPerYearChart(data);
+      createBreachesPerTimeBucketChart(data);
+      createPwnedPerTimeBucketChart(data);
       createPwnedPerBreachRatioChart(data);
-      createPwnedDataClassesPerYearChart(data);
-      createPwnedIndustryPerYearChart(data);
+      createPwnedDataClassesPerTimeBucketChart(data);
+      createPwnedIndustryPerTimeBucketChart(data);
       createMeanTimeToHIBPPublishChart(data);
 
       // Create tables
@@ -57,28 +57,42 @@ function showNumberOfBreachedAccounts(data) {
 const CHART_BACKGROUND_COLOR = "rgba(236, 240, 241, 1.0)";
 const CHART_BORDER_COLOR = "rgba(47, 54, 64,1.0)";
 
+function getTimeBucket(date) {
+  return new Date(date).getFullYear();
+}
+
+function getNameOfTimeBucket() {
+  return "Year";
+}
+
 function createBarPlotWithProperty(data, accumulateFunc, chartID, label) {
-  const breachesCountPerYear = data.reduce((acc, item) => {
-    const year = new Date(item.BreachDate).getFullYear();
-    acc[year] = (acc[year] || 0) + 1;
+  const breachesCountPerTimeBucket = data.reduce((acc, item) => {
+    const timeBucket = getTimeBucket(item.BreachDate);
+    acc[timeBucket] = (acc[timeBucket] || 0) + 1;
     return acc;
   }, {});
 
-  const breachesPerYear = data.reduce((acc, item) => {
-    const year = new Date(item.BreachDate).getFullYear();
-    acc[year] =
-      accumulateFunc(breachesCountPerYear[year], acc[year], item) || 0;
+  const breachesPerTimeBucket = data.reduce((acc, item) => {
+    const timeBucket = getTimeBucket(item.BreachDate);
+    acc[timeBucket] =
+      accumulateFunc(
+        breachesCountPerTimeBucket[timeBucket],
+        acc[timeBucket],
+        item
+      ) || 0;
     return acc;
   }, {});
 
-  const years = Object.keys(breachesPerYear).sort();
-  const counts = years.map((year) => breachesPerYear[year]);
+  const timeBuckets = Object.keys(breachesPerTimeBucket).sort();
+  const counts = timeBuckets.map(
+    (timeBucket) => breachesPerTimeBucket[timeBucket]
+  );
 
   const ctx = document.getElementById(chartID).getContext("2d");
   new Chart(ctx, {
     type: "bar",
     data: {
-      labels: years,
+      labels: timeBuckets,
       datasets: [
         {
           label: label,
@@ -99,42 +113,42 @@ function createBarPlotWithProperty(data, accumulateFunc, chartID, label) {
   });
 }
 
-function createBreachesPerYearChart(data) {
-  const accumulateFunc = (totalBreachesInYear, yearAcc, item) => {
-    return (yearAcc || 0) + 1;
+function createBreachesPerTimeBucketChart(data) {
+  const accumulateFunc = (totalBreachesInTimeBucket, bucketAcc, item) => {
+    return (bucketAcc || 0) + 1;
   };
 
   createBarPlotWithProperty(
     data,
     accumulateFunc,
     "breaches-per-year-chart",
-    "Breaches per Year"
+    "Breaches per " + getNameOfTimeBucket()
   );
 }
 
-function createPwnedPerYearChart(data) {
-  const accumulateFunc = (totalBreachesInYear, yearAcc, item) => {
-    return (yearAcc || 0) + item.PwnCount;
+function createPwnedPerTimeBucketChart(data) {
+  const accumulateFunc = (totalBreachesInTimeBucket, bucketAcc, item) => {
+    return (bucketAcc || 0) + item.PwnCount;
   };
 
   createBarPlotWithProperty(
     data,
     accumulateFunc,
     "pwned-per-year-chart",
-    "Pwned Accounts per Year"
+    "Pwned Accounts per " + getNameOfTimeBucket()
   );
 }
 
 function createPwnedPerBreachRatioChart(data) {
-  const accumulateFunc = (totalBreaches, yearAcc, item) => {
-    return yearAcc + (item.PwnCount || 0) / (totalBreaches || 1);
+  const accumulateFunc = (totalBreaches, bucketAcc, item) => {
+    return bucketAcc + (item.PwnCount || 0) / (totalBreaches || 1);
   };
 
   createBarPlotWithProperty(
     data,
     accumulateFunc,
     "pwned-per-branch-ratio-chart",
-    "Mean Pwned Accounts per Breach per Year"
+    "Mean Pwned Accounts per Breach " + getNameOfTimeBucket()
   );
 }
 
@@ -145,22 +159,23 @@ function createStackedBarPlotWithProperty(accessorFunc, data, chartID) {
   });
   const values = Array.from(allValues);
 
-  const perYear = {};
+  const perTimeBucket = {};
   data.forEach((item) => {
     if (!item.Domain || item.Domain === "") return;
 
-    const year = new Date(item.BreachDate).getFullYear();
+    const timeBucket = getTimeBucket(item.BreachDate);
 
-    if (!perYear[year]) perYear[year] = {};
+    if (!perTimeBucket[timeBucket]) perTimeBucket[timeBucket] = {};
     (accessorFunc(item) || []).forEach((dc) => {
-      perYear[year][dc] = (perYear[year][dc] || 0) + item.PwnCount;
+      perTimeBucket[timeBucket][dc] =
+        (perTimeBucket[timeBucket][dc] || 0) + item.PwnCount;
     });
   });
 
-  const years = Object.keys(perYear).sort();
+  const timeBuckets = Object.keys(perTimeBucket).sort();
   const datasets = values.map((dc) => ({
     label: dc,
-    data: years.map((year) => perYear[year][dc] || 0),
+    data: timeBuckets.map((timeBucket) => perTimeBucket[timeBucket][dc] || 0),
     backgroundColor: `hsl(${Math.floor(Math.random() * 360)},70%,70%)`,
     stack: "stack",
   }));
@@ -169,7 +184,7 @@ function createStackedBarPlotWithProperty(accessorFunc, data, chartID) {
   new Chart(ctx, {
     type: "bar",
     data: {
-      labels: years,
+      labels: timeBuckets,
       datasets: datasets,
     },
     options: {
@@ -185,7 +200,7 @@ function createStackedBarPlotWithProperty(accessorFunc, data, chartID) {
   });
 }
 
-function createPwnedDataClassesPerYearChart(data) {
+function createPwnedDataClassesPerTimeBucketChart(data) {
   const accessorFunc = (item) => {
     return item.DataClasses || [];
   };
@@ -197,7 +212,7 @@ function createPwnedDataClassesPerYearChart(data) {
   );
 }
 
-function createPwnedIndustryPerYearChart(data) {
+function createPwnedIndustryPerTimeBucketChart(data) {
   fetch("data/domains.csv")
     .then((response) => response.text())
     .then((csvText) => {
@@ -222,22 +237,22 @@ function createPwnedIndustryPerYearChart(data) {
 }
 
 function createMeanTimeToHIBPPublishChart(data) {
-  const perYear = {};
+  const perTimeBucket = {};
   data.forEach((item) => {
-    const year = new Date(item.BreachDate).getFullYear();
-    if (!perYear[year]) perYear[year] = [];
+    const timeBucket = getTimeBucket(item.BreachDate);
+    if (!perTimeBucket[timeBucket]) perTimeBucket[timeBucket] = [];
 
     if (item.AddedDate && item.BreachDate) {
       const breachDate = new Date(item.BreachDate);
       const addedDate = new Date(item.AddedDate);
       const diffDays = (addedDate - breachDate) / (1000 * 60 * 60 * 24);
-      perYear[year].push(diffDays);
+      perTimeBucket[timeBucket].push(diffDays);
     }
   });
 
-  const years = Object.keys(perYear).sort();
-  const means = years.map((year) => {
-    const times = perYear[year];
+  const timeBuckets = Object.keys(perTimeBucket).sort();
+  const means = timeBuckets.map((timeBucket) => {
+    const times = perTimeBucket[timeBucket];
     return times.length ? times.reduce((a, b) => a + b, 0) / times.length : 0;
   });
 
@@ -247,7 +262,7 @@ function createMeanTimeToHIBPPublishChart(data) {
   new Chart(ctx, {
     type: "line",
     data: {
-      labels: years,
+      labels: timeBuckets,
       datasets: [
         {
           label: "Mean Time to HIBP Publish (in days)",
